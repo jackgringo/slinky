@@ -31,13 +31,6 @@ function link {
         else
             dest="$2"
         fi
-        
-        if [[ "$dest" =~ ^/ ]]; then
-            dest="$dest"
-        else
-            dest="$dest"
-            relative=true
-        fi
     fi
         
     for ((dirx=0; dirx<=${#basedirs[@]}-1; dirx+=1))
@@ -46,13 +39,13 @@ function link {
         
         while IFS= read -r -d $'\0' file; do
             files[indexf++]="$file"        # or however you want to process each file
-        done < <(find "${basedirs[$dirx]}" -name "$1" -type f -print0)
+        done < <(find "${basedirs[$dirx]}" -iname "$1" -type f -print0)
 
         # Search dirs
 
         while IFS= read -r -d $'\0' file; do
             directories[indexd++]="$file"        # or however you want to process each file
-        done < <(find "${basedirs[$dirx]}" -name "$1" -type d -print0)
+        done < <(find "${basedirs[$dirx]}" -iname "$1" -type d -print0)
     done
     
     dirsat=${#files[@]}
@@ -80,23 +73,22 @@ function link {
     ####### Any results?
     
     if [[ $count > 0 ]]; then
+        
         echo -en "\nChoose: "
         read choice
+        
         if [ $choice -ge $dirsat ]; then
             src=${directories[$(($choice-$dirsat))]}
         else
             src=${files[$choice]}
         fi
+        
         linked=`ln -s "$src" "$dest"`
+        
         if [ -z "$linked" ]; then
-            if $relative; then
-                fulldest=`pwd`"/$dest"
-            else
-                fulldest=$dest
-            fi
             echo -e "\nLinked created successfully!"
-            echo -e "\n$fulldest@ -> $src\n"
         fi
+        
     else
         echo -e "Doh! No sources found for \"$1\"."
     fi
