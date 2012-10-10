@@ -1,0 +1,117 @@
+#!/bin/bash
+
+# Read configs
+
+IFS=$'\n'
+while read line
+do
+    basedirs+=("$line")
+done < ~/.slinky/directories
+
+if [[ ${#basedirs[@]} == 0 ]]; then
+  echo -e "\nslinky: No search directories! Add each directory to a new line in ~/.slinky/directories"
+  exit  
+fi
+
+function usage {
+    echo "usage: slinky <command> [<source>] [<destination>]"
+}
+
+function link {
+    count=0
+    unset files directories indexf indexd
+    
+    if [ -z "$1" ]; then
+        echo -e "No source file selected!"
+        usage
+        exit
+    else
+        if [ -z "$2" ]; then
+            dest="$1"
+        else
+            dest="$2"
+        fi
+        
+        if [[ "$dest" =~ ^/ ]]; then
+            dest="$dest"
+        else
+            dest="$dest"
+            relative=true
+        fi
+    fi
+        
+    for ((dirx=0; dirx<=${#basedirs[@]}-1; dirx+=1))
+    do
+        # Search files
+        
+        while IFS= read -r -d $'\0' file; do
+            files[indexf++]="$file"        # or however you want to process each file
+        done < <(find "${basedirs[$dirx]}" -name "$1" -type f -print0)
+
+        # Search dirs
+
+        while IFS= read -r -d $'\0' file; do
+            directories[indexd++]="$file"        # or however you want to process each file
+        done < <(find "${basedirs[$dirx]}" -name "$1" -type d -print0)
+    done
+    
+    dirsat=${#files[@]}
+    
+    if [[ ${#files[@]}>0 ]]; then
+        echo -e "\n${#files[@]} files found:\n"
+        max=${#files[@]}
+        for ((x=0; x<=$max-1; x+=1))
+        do
+            echo -e "[$count] ${files[$count]}"
+            ((count++))
+        done
+    fi
+    
+    if [[ ${#directories[@]} > 0 ]]; then
+        echo -e "\n${#directories[@]} directories found:\n"
+        max=${#directories[@]}
+        for ((x=0; x<=$max-1; x+=1))
+        do
+            echo -e "[$count] ${directories[$x]}"
+            ((count++))
+        done
+    fi
+    
+    ####### Any results?
+    
+    if [[ $count > 0 ]]; then
+        echo -en "\nChoose: "
+        read choice
+        if [ $choice -ge $dirsat ]; then
+            src=${directories[$(($choice-$dirsat))]}
+        else
+            src=${files[$choice]}
+        fi
+        linked=`ln -s "$src" "$dest"`
+        if [ -z "$linked" ]; then
+            if $relative; then
+                fulldest=`pwd`"/$dest"
+            else
+                fulldest=$dest
+            fi
+            echo -e "\nLinked created successfully!"
+            echo -e "\n$fulldest@ -> $src\n"
+        fi
+    else
+        echo -e "Doh! No sources found for \"$1\"."
+    fi
+    
+}
+
+if [ -z "$1" ]; then
+    usage
+    exit
+else    
+    case "$1" in
+        'link' )
+            link $2 $3;;
+        * )
+            echo "slinky: Didn't recognise that command sorry.";;
+    esac
+    
+fi
