@@ -1,5 +1,4 @@
-Slinky - easier symlinking
-==========================
+# Slinky - easier symlinking
 
 Work in progress!
 
