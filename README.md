@@ -1,4 +1,4 @@
-# Slinky - easier symlinking
+# Slinky - a symlinking tool
 
 Work in progress!
 
