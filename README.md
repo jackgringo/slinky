@@ -1,6 +1,6 @@
 # Slinky - a symlinking tool
 
-Work in progress!
+Work in progress.
 
 - Place slinky in a directory in your $PATH e.g. /usr/local/bin
 - Create a config directory
